@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Heap - C++ + WASM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0a0000 0%, #1a0000 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #f2f2f2;
+}
+
+.container {
+    max-width: 1800px;
+    margin: 0 auto;
+    background: #0f0000;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.25);
+    overflow: hidden;
+    border: 1px solid rgba(255, 0, 0, 0.25);
+}
+
+header {
+    background: linear-gradient(135deg, #330000 0%, #660000 100%);
+    color: #ff2e2e;
+    padding: 30px;
+    text-align: center;
+    text-shadow: 0 0 12px #ff0000;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    letter-spacing: 1.5px;
+}
+
+.badge {
+    display: inline-block;
+    background: rgba(255,0,0,0.25);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    margin-top: 10px;
+    color: #ffb3b3;
+}
+
+.info-bar {
+    display: flex;
+    justify-content: space-around;
+    background: #1a0000;
+    padding: 20px;
+    border-bottom: 2px solid #330000;
+}
+
+.info-label {
+    color: #aa4444;
+}
+
+.info-value {
+    font-size: 2em;
+    font-weight: bold;
+    color: #ff1a1a;
+    text-shadow: 0 0 6px #ff1a1a;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    padding: 30px;
+}
+
+.controls {
+    background: #140000;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #300000;
+}
+
+.control-group h4 {
+    color: #ff4d4d;
+    text-shadow: 0 0 5px #a00000;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    background: #1a0000;
+    border: 2px solid #330000;
+    color: #ffcccc;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: 0.3s;
+    margin-bottom: 8px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #ff1a1a;
+    box-shadow: 0 0 8px #ff1a1a;
+}
+
+
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.25s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 4px rgba(255, 0, 0, 0.5);
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.25) inset;
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(60%);
+}
+
+
+
+.btn-primary {
+    background: linear-gradient(135deg, #520000, #9c0000);
+    color: #ffe6e6;
+    border: 1px solid #d40000;
+    box-shadow: 0 0 15px rgba(255,0,0,0.5);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7a0000, #c00000);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 0 25px rgba(255,0,0,0.9);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #4a0000, #8c0000);
+    color: white;
+    border: 1px solid #b30000;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7a0000, #b50000);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 0 25px rgba(180,0,0,0.8);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #6e3a00, #b85e00);
+    color: white;
+    border: 1px solid #ff9900;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: linear-gradient(135deg, #8a4c00, #d37400);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 0 20px rgba(255,150,0,0.7);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #004d2a, #008f54);
+    color: white;
+    border: 1px solid #00c777;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: linear-gradient(135deg, #006b3b, #00a866);
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 0 20px rgba(0,255,160,0.5);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #00203d, #003c70);
+    color: white;
+    border: 1px solid #0066cc;
+}
+
+.btn-info:hover:not(:disabled) {
+    background: linear-gradient(135deg, #003055, #005499);
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 0 20px rgba(0,120,255,0.6);
+}
+
+
+
+.visualization-container {
+    background: #0d0d0d; 
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #3c0f0f; 
+    min-height: 700px;
+}
+
+
+.svg-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 650px;
+    border: 1px solid #3c0f0f;
+    border-radius: 8px;
+    background: radial-gradient(circle at top, #1a0f0f, #0a0000);
+}
+
+.legend-box {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid;
+}
+
+.legend-min {
+    background: #ff1a1a;
+    border-color: #b30000;
+}
+
+.legend-marked {
+    background: #b35400;
+    border-color: #8a3f00;
+}
+
+.legend-normal {
+    background: #660000;
+    border-color: #990000;
+}
+
+.divider {
+    height: 2px;
+    background: #4d0000;
+    margin: 15px 0;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1> Fibonacci Heap </h1>
+        </header>
+        
+        <div class="info-bar">
+            <div class="info-item">
+                <div class="info-label">Tamaño</div>
+                <div class="info-value" id="sizeDisplay">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Mínimo</div>
+                <div class="info-value" id="minDisplay">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Árboles</div>
+                <div class="info-value" id="treesDisplay">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Estado</div>
+                <div class="info-value" id="statusDisplay" style="font-size: 1.2em;"></div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="controls">
+                <h3 style="margin-bottom: 20px; color: #333;">Operaciones</h3>
+                
+                <div class="control-group">
+                    <h4> Insertar</h4>
+                    <input type="number" id="insertInput" placeholder="Ingresa un número">
+                    <button class="btn-primary" id="insertBtn">
+                        <span>Insertar</span>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="control-group">
+                    <h4> Consultar</h4>
+                    <button class="btn-info" id="findMinBtn">
+                        <span>Find Min</span>
+                    </button>
+                    <button class="btn-warning" id="extractMinBtn">
+                        <span>Extract Min</span>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="control-group">
+                    <h4> Decrease Key</h4>
+                    <input type="number" id="decreaseOldValue" placeholder="Valor actual">
+                    <input type="number" id="decreaseNewValue" placeholder="Nuevo valor (menor)">
+                    <button class="btn-warning" id="decreaseKeyBtn">
+                        <span>Decrease Key</span>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="control-group">
+                    <h4> Eliminar</h4>
+                    <input type="number" id="deleteInput" placeholder="Valor a eliminar">
+                    <button class="btn-danger" id="deleteBtn">
+                        <span>Delete</span>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="control-group">
+                    <h4> Acciones Rápidas</h4>
+                    <div class="quick-actions">
+                        <button class="btn-success" id="random5Btn">
+                            <span>+5 Random</span>
+                        </button>
+                        <button class="btn-success" id="random10Btn">
+                            <span>+10 Random</span>
+                        </button>
+                    </div>
+                    <button class="btn-danger" id="clearBtn">
+                        <span> Clear All</span>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="control-group">
+                    <h4> Modo Constructor</h4>
+                    <button class="btn-info" id="constructorBtn">
+                        <span id="constructorBtnText">Activar Constructor</span>
+                    </button>
+                    <div id="constructorPanel" style="display:none; margin-top:10px;">
+                        <input type="text" id="manualInput" placeholder="Ej: 5,12,8,3,15" style="margin-bottom:8px;">
+                        <button class="btn-success" id="buildBtn">
+                            <span>Construir Árbol</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="visualization-container">
+                    <h3>    Visualización del Fibonacci Heap</h3>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-box legend-min"></div>
+                            <span>Nodo Mínimo</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box legend-marked"></div>
+                            <span>Nodo Marcado</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box legend-normal"></div>
+                            <span>Nodo Normal</span>
+                        </div>
+                    </div>
+                    <div class="svg-wrapper">
+                        <svg id="heapCanvas"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="fibonacci_heap.js"></script>
+    <script>
+        let heap;
+        let Module;
+        let isReady = false;
+        let constructorMode = false;
+        
+        async function init() {
+            try {
+                if (typeof createFibHeapModule === 'undefined') {
+                    throw new Error('No se encontró el módulo. Asegúrate de compilar con emscripten.');
+                }
+                
+                Module = await createFibHeapModule({
+                    locateFile: (path) => {
+                        // Asegurar que el WASM se carga desde la misma ruta
+                        return path;
+                    }
+                });
+                heap = new Module.FibHeap();
+                isReady = true;
+                updateInfo();
+                visualizeHeap();
+                updateStatus('✅');
+                enableButtons();
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus('❌');
+                alert('Error al cargar WASM. Revisa la consola y compila correctamente.');
+            }
+        }
+        
+        function enableButtons() {
+            document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        }
+        
+        function updateInfo() {
+            if (!isReady) return;
+            document.getElementById('sizeDisplay').textContent = heap.size();
+            const min = heap.findMin();
+            document.getElementById('minDisplay').textContent = min === -1 ? '-' : min;
+            
+            try {
+                const structure = JSON.parse(heap.getStructure());
+                document.getElementById('treesDisplay').textContent = structure.length;
+            } catch (e) {
+                document.getElementById('treesDisplay').textContent = '0';
+            }
+        }
+        
+        function updateStatus(emoji) {
+            document.getElementById('statusDisplay').textContent = emoji;
+        }
+        
+        function visualizeHeap() {
+            if (!isReady) return;
+            
+            const svg = document.getElementById('heapCanvas');
+            svg.innerHTML = '';
+            
+            try {
+                const structure = JSON.parse(heap.getStructure());
+                
+                if (structure.length === 0) {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', '50%');
+                    text.setAttribute('y', '100');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', '#999');
+                    text.setAttribute('font-size', '24');
+                    text.textContent = 'Heap vacío - Inserta valores para comenzar';
+                    svg.appendChild(text);
+                    svg.setAttribute('width', '100%');
+                    svg.setAttribute('height', '200');
+                    return;
+                }
+                
+                const nodeRadius = 30;
+                const horizontalSpacing = 100;
+                const verticalSpacing = 100;
+                const treePadding = 120;
+                let totalWidth = 100;
+                
+                const treePositions = [];
+                structure.forEach((tree, index) => {
+                    const treeWidth = calculateTreeWidth(tree) * horizontalSpacing;
+                    treePositions.push({
+                        tree: tree,
+                        x: totalWidth + treeWidth / 2,
+                        width: treeWidth,
+                        index: index
+                    });
+                    totalWidth += treeWidth + treePadding;
+                });
+                
+                treePositions.forEach(({tree, x, width, index}) => {
+                    const treeHeight = (calculateTreeDepth(tree) + 1) * verticalSpacing;
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x - width / 2 - 20);
+                    rect.setAttribute('y', '20');
+                    rect.setAttribute('width', width + 40);
+                    rect.setAttribute('height', treeHeight + 40);
+                    rect.setAttribute('fill', 'transparent');
+                    rect.setAttribute('stroke', '#1e40af');
+                    rect.setAttribute('stroke-width', '2');
+                    rect.setAttribute('stroke-dasharray', '5,5');
+                    rect.setAttribute('rx', '10');
+                    svg.appendChild(rect);
+                    
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', x - width / 2 - 10);
+                    label.setAttribute('y', '40');
+                    label.setAttribute('fill', '#6c757d');
+                    label.setAttribute('font-size', '14');
+                    label.setAttribute('font-weight', 'bold');
+                    label.textContent = `Árbol ${index + 1}`;
+                    svg.appendChild(label);
+                    
+                    drawTree(svg, tree, x, 80, width, nodeRadius, horizontalSpacing, verticalSpacing);
+                });
+                
+                const maxDepth = calculateMaxDepth(structure);
+                const totalHeight = (maxDepth + 1) * verticalSpacing + 100;
+                
+                svg.setAttribute('width', totalWidth);
+                svg.setAttribute('height', totalHeight);
+                
+            } catch (e) {
+                console.error('Error visualizando:', e);
+            }
+        }
+        
+        function calculateTreeWidth(node) {
+            if (!node || !node.children || node.children.length === 0) return 1;
+            return Math.max(1, node.children.reduce((sum, child) => sum + calculateTreeWidth(child), 0));
+        }
+        
+        function calculateTreeDepth(node, depth = 0) {
+            if (!node || !node.children || node.children.length === 0) return depth;
+            return Math.max(...node.children.map(child => calculateTreeDepth(child, depth + 1)));
+        }
+        
+        function calculateMaxDepth(structure) {
+            return Math.max(...structure.map(tree => calculateTreeDepth(tree)));
+        }
+        
+        function drawTree(svg, node, x, y, width, radius, hSpacing, vSpacing) {
+            if (!node) return;
+            
+            if (node.children && node.children.length > 0) {
+                const childWidth = width / node.children.length;
+                let childX = x - width / 2 + childWidth / 2;
+                
+                node.children.forEach(child => {
+                    const childY = y + vSpacing;
+                    
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('y1', y + radius);
+                    line.setAttribute('x2', childX);
+                    line.setAttribute('y2', childY - radius);
+                    line.setAttribute('stroke', '#95a5a6');
+                    line.setAttribute('stroke-width', '3');
+                    line.setAttribute('opacity', '0.6');
+                    svg.appendChild(line);
+                    
+                    drawTree(svg, child, childX, childY, childWidth, radius, hSpacing, vSpacing);
+                    childX += childWidth;
+                });
+            }
+            
+            if (node.isMin) {
+                const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                halo.setAttribute('cx', x);
+                halo.setAttribute('cy', y);
+                halo.setAttribute('r', radius + 8);
+                halo.setAttribute('fill', 'none');
+                halo.setAttribute('stroke', '#e74c3c');
+                halo.setAttribute('stroke-width', '3');
+                halo.setAttribute('opacity', '0.3');
+                svg.appendChild(halo);
+            }
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', radius);
+            
+            if (node.isMin) {
+                circle.setAttribute('fill', '#e74c3c');
+                circle.setAttribute('stroke', '#c0392b');
+            } else if (node.marked) {
+                circle.setAttribute('fill', '#f39c12');
+                circle.setAttribute('stroke', '#e67e22');
+            } else {
+                circle.setAttribute('fill', '#667eea');
+                circle.setAttribute('stroke', '#764ba2');
+            }
+            circle.setAttribute('stroke-width', '4');
+            circle.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.2))';
+            svg.appendChild(circle);
+            
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x);
+            text.setAttribute('y', y);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('dominant-baseline', 'middle');
+            text.setAttribute('fill', 'white');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('font-size', '20');
+            text.textContent = node.key;
+            svg.appendChild(text);
+            
+            if (node.degree > 0) {
+                const badgeX = x + radius - 8;
+                const badgeY = y - radius + 8;
+                
+                const badge = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                badge.setAttribute('cx', badgeX);
+                badge.setAttribute('cy', badgeY);
+                badge.setAttribute('r', '12');
+                badge.setAttribute('fill', '#27ae60');
+                badge.setAttribute('stroke', 'white');
+                badge.setAttribute('stroke-width', '2');
+                svg.appendChild(badge);
+                
+                const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                badgeText.setAttribute('x', badgeX);
+                badgeText.setAttribute('y', badgeY);
+                badgeText.setAttribute('text-anchor', 'middle');
+                badgeText.setAttribute('dominant-baseline', 'middle');
+                badgeText.setAttribute('fill', 'white');
+                badgeText.setAttribute('font-size', '11');
+                badgeText.setAttribute('font-weight', 'bold');
+                badgeText.textContent = node.degree;
+                svg.appendChild(badgeText);
+            }
+            
+            if (node.marked) {
+                const starX = x - radius + 8;
+                const starY = y - radius + 8;
+                
+                const star = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                star.setAttribute('x', starX);
+                star.setAttribute('y', starY);
+                star.setAttribute('text-anchor', 'middle');
+                star.setAttribute('dominant-baseline', 'middle');
+                star.setAttribute('font-size', '16');
+                star.textContent = '★';
+                svg.appendChild(star);
+            }
+            
+            if (node.isMin) {
+                const minLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                minLabel.setAttribute('x', x);
+                minLabel.setAttribute('y', y + radius + 20);
+                minLabel.setAttribute('text-anchor', 'middle');
+                minLabel.setAttribute('fill', '#e74c3c');
+                minLabel.setAttribute('font-size', '12');
+                minLabel.setAttribute('font-weight', 'bold');
+                minLabel.textContent = 'MIN';
+                svg.appendChild(minLabel);
+            }
+        }
+        
+        document.getElementById('insertBtn').addEventListener('click', function() {
+            if (!isReady) return;
+            const input = document.getElementById('insertInput');
+            const value = parseInt(input.value);
+            if (isNaN(value)) {
+                alert('❌ Ingresa un número válido');
+                return;
+            }
+            heap.insert(value);
+            input.value = '';
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('findMinBtn').addEventListener('click', function() {
+            if (!isReady) return;
+            const min = heap.findMin();
+            if (min === -1) {
+                alert('❌ Heap vacío');
+            } else {
+                alert(`🔍 Mínimo: ${min}`);
+            }
+        });
+        
+        document.getElementById('extractMinBtn').addEventListener('click', function() {
+            if (!isReady) return;
+            const min = heap.extractMin();
+            if (min === -1) {
+                alert('❌ Heap vacío');
+            }
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('decreaseKeyBtn').addEventListener('click', function() {
+            if (!isReady) return;
+            const oldValue = parseInt(document.getElementById('decreaseOldValue').value);
+            const newValue = parseInt(document.getElementById('decreaseNewValue').value);
+            
+            if (isNaN(oldValue) || isNaN(newValue)) {
+                alert('❌ Ingresa valores válidos');
+                return;
+            }
+            
+            if (newValue >= oldValue) {
+                alert('❌ El nuevo valor debe ser menor');
+                return;
+            }
+            
+            const success = heap.decreaseKey(oldValue, newValue);
+            if (!success) {
+                alert('❌ No se encontró el nodo');
+            }
+            
+            document.getElementById('decreaseOldValue').value = '';
+            document.getElementById('decreaseNewValue').value = '';
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('deleteBtn').addEventListener('click', function() {
+            if (!isReady) return;
+            const input = document.getElementById('deleteInput');
+            const value = parseInt(input.value);
+            if (isNaN(value)) {
+                alert('❌ Ingresa un número válido');
+                return;
+            }
+            heap.deleteByValue(value);
+            input.value = '';
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            if (!isReady) return;
+            if (heap.isEmpty()) {
+                alert('⚠️ Ya está vacío');
+                return;
+            }
+            heap.clear();
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('random5Btn').addEventListener('click', function() {
+            if (!isReady) return;
+            for (let i = 0; i < 5; i++) {
+                heap.insert(Math.floor(Math.random() * 100) + 1);
+            }
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('random10Btn').addEventListener('click', function() {
+            if (!isReady) return;
+            for (let i = 0; i < 10; i++) {
+                heap.insert(Math.floor(Math.random() * 100) + 1);
+            }
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('constructorBtn').addEventListener('click', function() {
+            constructorMode = !constructorMode;
+            const panel = document.getElementById('constructorPanel');
+            const btnText = document.getElementById('constructorBtnText');
+            
+            if (constructorMode) {
+                panel.style.display = 'block';
+                btnText.textContent = 'Desactivar Constructor';
+            } else {
+                panel.style.display = 'none';
+                btnText.textContent = 'Activar Constructor';
+            }
+        });
+        
+        document.getElementById('buildBtn').addEventListener('click', function() {
+            if (!isReady) return;
+            
+            const input = document.getElementById('manualInput');
+            const values = input.value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+            
+            if (values.length === 0) {
+                alert('❌ Ingresa valores separados por comas');
+                return;
+            }
+            
+            heap.clear();
+            values.forEach(v => heap.insert(v));
+            
+            input.value = '';
+            updateInfo();
+            visualizeHeap();
+        });
+        
+        document.getElementById('insertInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('insertBtn').click();
+        });
+        
+        document.getElementById('deleteInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('deleteBtn').click();
+        });
+        
+        document.getElementById('decreaseNewValue').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('decreaseKeyBtn').click();
+        });
+        
+        document.getElementById('manualInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('buildBtn').click();
+        });
+        
+        document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        
+        init();
+    </script>
+</body>
+</html>
